@@ -1,6 +1,6 @@
 library(INLA)
 
-fin_data <- readRDS(file="data/toy_data.RDS")
+fin_data <- readRDS(file="toy_data.RDS")
 
 
 
@@ -14,7 +14,7 @@ formula_main <- counts ~ 1  + rural_urban + vax_prop_stand +
   bame_other_stand + 
   f(age_class, model='iid', constr=TRUE) +
   f(date_ID, model = "rw2") +
-  f(LTLA_ID, model = "bym2", graph = "data/W.adj", scale.model = TRUE, constr =
+  f(LTLA_ID, model = "bym2", graph = "W.adj", scale.model = TRUE, constr =
       TRUE, hyper = list(theta1 = list("PCprior", c(1,   0.01)), theta2 =
                            list("PCprior", c(0.5, 0.5)))) +
   f(date_LTLA_ID, model = "iid") + 
@@ -39,7 +39,7 @@ formula_main2 <- counts ~ 1  + rural_urban + vax_prop_stand +
   IMD_stand + BAME_stand + 
   f(age_class, model='iid', constr=TRUE) +
   f(date_ID, model = "rw2") +
-  f(LTLA_ID, model = "bym2", graph = "data/W.adj", scale.model = TRUE, constr =
+  f(LTLA_ID, model = "bym2", graph = "W.adj", scale.model = TRUE, constr =
       TRUE, hyper = list(theta1 = list("PCprior", c(1,   0.01)), theta2 =
                            list("PCprior", c(0.5, 0.5)))) +
   f(date_LTLA_ID, model = "iid")  +
