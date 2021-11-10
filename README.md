@@ -4,11 +4,11 @@ This repository contains code to run the analysis described in *Time varying ass
 
 ## Data
 
-Due to data confidenciality issues, the testing and vaccination data used in the paper cannot be shared.
+**Due to data confidenciality issues, the testing and vaccination data used in the paper cannot be shared.**
 
 Publicly available testing and vaccination data provided in this repository are for illustration purpose only and have been retrieved from https://coronavirus.data.gov.uk/details/download.
 
-Note that whereas in the paper we model the test positivity rate (number of positive tests out of total number of tests), here we model the number of positive tests out of the total population. 
+Note that whereas in the article we model the test positivity rate (number of positive tests out of total number of tests), here we use the number of positive tests out of the total population. 
 
 Data overview (columns in `toy_data.RDS`):
 - `lad20cd`: LTLA code (using 2020 codes)
@@ -30,17 +30,16 @@ All columns that end in `_stand` are standardized versions of that column (i.e.,
 
 ## Getting started
 
-First clone this repo:
+Clone this repo:
 
 ```{bash}
 git clone https://github.com/alan-turing-institute/jbc-turing-rss-equality.git
 ```
 
-The analysis is written in R and uses the package [R-INLA](https://www.r-inla.org).
-To [install](https://www.r-inla.org/download-install):
+And install the analysis package [R-INLA](https://www.r-inla.org):
 
 ```{R}
 install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 ```
 
-The analysis code is contained in the [equality_model.R](equality_model.R) script. This loads the toy data retrieved from public data sources and runs the two main formulas used in the paper. Note that to load the data, you have to set the working directory to this repository.
+The analysis code is in the [equality_model.R](equality_model.R) script. It loads the toy dataset retrieved from public data sources and runs the two main formulas used in the paper. 
