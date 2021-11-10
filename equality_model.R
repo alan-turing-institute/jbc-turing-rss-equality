@@ -31,7 +31,7 @@ res_main <- inla(formula_main, data = fin_data, family = "binomial",
                  control.inla=list(int.strategy="eb", strategy="adaptive"))
 
 summary(res_main)
-
+save(res_main, file='res_main.RData')
 
 # Main analysis for aggregated BAME 
 
@@ -54,3 +54,4 @@ res_main2 <- inla(formula_main, data = data_fin, family = "binomial",
                  control.inla=list(int.strategy="eb", strategy="adaptive"))
 
 summary(res_main2)
+save(res_main2, file='res_main2.RData')
