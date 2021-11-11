@@ -101,7 +101,6 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
     
     # add row for Buckinghamshire
     tmp <- rep(NA, ncol(plot_data))
-    #tmp <- plot_data[1,]
     plot_data <- rbind(plot_data, tmp)
     plot_data[1,'lad20cd'] <- "E06000060"
     plot_data[1, 'LTLA_ID'] <- 55
@@ -190,7 +189,7 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
   return(combined)
 }
 
-space_plot <- space_dis_plots(inla_res = res_main,  data = fin_data, outcome_name = "Test Positivity", lims = c(-2, 2))
+space_plot <- space_dis_plots(inla_res = res_main,  data = fin_data, outcome_name = "Test Positivity", lims = c(-1.5, 1.5))
 ggsave(filename = 'Figure1.png', space_plot, width = 10, height = 4)
 
 
