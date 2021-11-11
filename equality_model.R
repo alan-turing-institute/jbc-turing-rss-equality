@@ -1,9 +1,10 @@
 library(INLA)
 
 fin_data <- readRDS(file="toy_data.RDS")
-
-
-
+# remove duplicate rows
+fin_data <- fin_data %>% 
+  group_by(LTLA_ID, date_ID, age_class) %>% 
+  filter(row_number()==1) %>% ungroup()
 
 # Main analysis for disaggregated BAME subgroups 
 
@@ -28,7 +29,8 @@ res_main <- inla(formula_main, data = fin_data, family = "binomial",
                  verbose = TRUE, 
                  num.threads = 2, 
                  control.fixed=list(prec=1,prec.intercept=1),
-                 control.inla=list(int.strategy="eb", strategy="adaptive"))
+                 control.inla=list(int.strategy="eb", strategy="adaptive"),
+                 control.compute=list(config = TRUE))
 
 summary(res_main)
 save(res_main, file='res_main.RData')
@@ -51,7 +53,8 @@ res_main2 <- inla(formula_main, data = data_fin, family = "binomial",
                  verbose = TRUE, 
                  num.threads = 2, 
                  control.fixed=list(prec=1,prec.intercept=1),
-                 control.inla=list(int.strategy="eb", strategy="adaptive"))
+                 control.inla=list(int.strategy="eb", strategy="adaptive"),
+                 control.compute=list(config = TRUE))
 
 summary(res_main2)
 save(res_main2, file='res_main2.RData')
