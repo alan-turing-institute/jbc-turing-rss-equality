@@ -25,15 +25,15 @@ load("space_obj.RData")
 
 # ==========================================================================
 # 1. Temporal trend (logit scale)
-# - Supplementary Figure 3 in the manuscript
+# - Supplementary Figure 3 in the manuscript - main analysis 1
 # ========================================================================== 
 
 make_time_plot <- function(inla_res, outcome_name, color_band) { 
   
   # temporal random effects
   time_res <- inla_res$summary.random$date_ID
-  time_res$week <- seq.Date(start_date, end_date, by = 7)
-  
+  time_res$week <- seq(1, n_weeks)
+
   # space-time interactions
   inter_df <- data.frame(LTLA_ID = 1:n_LTLA)
   for(n in 1:n_weeks){
@@ -63,7 +63,7 @@ make_time_plot <- function(inla_res, outcome_name, color_band) {
                 linetype = 2, alpha=0.5, fill = color_band, colour = NA) + 
     theme_minimal() + labs(y = "Median and 95% CI (logit scale)", x = "", color ="") + 
     ylim(-2.5,2.1) +
-    ggtitle(outcome_name) + 
+    ggtitle(outcome_name)  
     
   return(time_plot)
 }
@@ -73,7 +73,7 @@ ggsave("Supplementary_Figure3.png", time_plot, width = 10, height = 4)
 
 # ==========================================================================
 # 2. Spatial plot (logit scale)
-# - Figure 1 in the manuscript
+# - Figure 1 in the manuscript - main analysis 1
 # ========================================================================== 
 
 space_dis_plots <- function(inla_res, data, outcome_name, lims) {
@@ -192,4 +192,52 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
 space_plot <- space_dis_plots(inla_res = res_main,  data = fin_data, outcome_name = "Test Positivity", lims = c(-1.5, 1.5))
 ggsave(filename = 'Figure1.png', space_plot, width = 10, height = 4)
 
+# ==========================================================================
+# 3. Outcome (average weekly test positivity) by IMD/BAME profile
+# - Supplementary Figure 6  - main analysis 2 
+# ========================================================================== 
 
+inla_res <- res_main2
+
+# Get values for low, medium and high BAME and IMD profiles
+cov_df <- fin_data %>% filter(date_ID == 1 & age_class == '[35,55)')
+cov_df_small <- cov_df %>% summarise(bame_stand = quantile(BAME_stand, probs = c(0.25, .5, .75)),
+                                     IMD_stand = quantile(IMD_stand, probs = c(0.25, .5,  .75)))
+
+
+# function to transform coefficients into proportions
+prob_function <- function(x, y) {
+  log_scale <-  inla_res$summary.fixed[c("(Intercept)","IMD_stand","BAME_stand"), "0.5quant"] %*% c(1, cov_df_small$IMD_stand[x], cov_df_small$bame_stand[y])
+  return(boot::inv.logit(log_scale))
+}
+
+# get test positivity by BAME & IMD profile (1=low/2=medium/3=high)
+val_df <- with(cov_df_small, data.frame(bame_stand = bame_stand[1], bame_idx = 1,
+                                        IMD_stand = IMD_stand[1], IMD_idx = 1,
+                                        prob = prob_function(1, 1)))
+for(i in 1:3){
+  for(j in 1:3)
+    val_df <- rbind(val_df, with(cov_df_small ,data.frame(bame_stand = bame_stand[i], bame_idx = i,
+                                                          IMD_stand = IMD_stand[j], IMD_idx = j,
+                                                          prob = prob_function(i, j))))
+}
+val_df <- val_df %>% distinct()
+val_df$bame_idx <- factor(val_df$bame_idx, levels = c(1, 2,3), labels = c("Low", "Medium", "High"))
+val_df$IMD_idx <- factor(val_df$IMD_idx, levels = c(1, 2,3), labels = c("Low", "Medium", "High"))
+
+# format text for tiles:
+# - the outcome as percentage
+# - in parenthesis the relative change between profile and the reference (low BAME & low IMD)
+val_df$perc <- paste0(format(round(val_df$prob, 4) *100, nsmall = 2), 
+                      "%\n(", 
+                      format(round(val_df$prob/prob_function(1, 1), 2), nsmall = 2), 
+                      ")")
+
+# plot
+tile_tp <- ggplot(val_df, aes(x = bame_idx, y = IMD_idx, fill = prob)) +
+  geom_tile(aes(fill = prob)) +
+  geom_text(aes(label = perc)) +
+  scale_fill_viridis_c(option = "E",  na.value="transparent", alpha =.9, begin = 0.5, end = 0.7,direction = -1) +
+  theme_minimal() + theme(legend.position = "none") + guides(y=  guide_axis(angle = 90)) +
+  labs(x = "BAME", y = "IMD") +
+  ggtitle("Test Positivity")
