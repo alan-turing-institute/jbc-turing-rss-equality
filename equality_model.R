@@ -46,9 +46,9 @@ formula_main2 <- counts ~ 1  + rural_urban + vax_prop_stand +
                            list("PCprior", c(0.5, 0.5)))) +
   f(date_LTLA_ID, model = "iid")  +
   f(date_month, BAME_stand, model= "rw1", constr = TRUE) +
-  f(date_month2, IMD_stand, model= "rw1", constr = TRUE)
+  f(date_month_IMD, IMD_stand, model= "rw1", constr = TRUE)
 
-res_main2 <- inla(formula_main, data = data_fin, family = "binomial",
+res_main2 <- inla(formula_main2, data = fin_data, family = "binomial",
                  Ntrials = tot_pop,
                  verbose = TRUE, 
                  num.threads = 2, 
