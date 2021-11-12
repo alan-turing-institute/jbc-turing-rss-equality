@@ -1,7 +1,8 @@
 library(INLA)
 
+# Load data
 fin_data <- readRDS(file="toy_data.RDS")
-# remove duplicate rows
+## Remove duplicate rows
 fin_data <- fin_data %>% 
   group_by(LTLA_ID, date_ID, age_class) %>% 
   filter(row_number()==1) %>% ungroup()

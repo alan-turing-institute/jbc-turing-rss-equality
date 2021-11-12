@@ -22,15 +22,16 @@ git clone https://github.com/alan-turing-institute/jbc-turing-rss-equality.git
 ```
 
 The analysis code with the two main formulas used in the paper is in the [equality_model.R](equality_model.R) script. 
+
 To run the analysis requires installing the [R-INLA](https://www.r-inla.org) package:
 
 ```{R}
 install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 ```
 
-The analysis script has two file dependencies :
+The analysis script has two file dependencies:
 - `toy_data.RDS` which contains a toy dataset retrieved from public data source
-- `W.adj` which strores the LTLA adjacency matrix necessary for including the spatial randon effect in the model
+- `W.adj` which has the LTLA adjacency matrix necessary for including the spatial randon effect in the model
 
 ## Plotting
 
@@ -41,6 +42,7 @@ To install those, run:
 ```{R}
 packages <- c(
   "tidyr",
+  "plyr",
   "dplyr",
   "ggplot2",
   "patchwork","

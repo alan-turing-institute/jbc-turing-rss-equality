@@ -1,5 +1,6 @@
 library(INLA)
 library(tidyr)
+library(plyr)
 library(dplyr)
 library(ggplot2)
 library(patchwork)
@@ -381,6 +382,45 @@ time_plot
 #ggsave("Supplementary_Figure3.png", time_plot, width = 10, height = 4)
 
 # ==========================================================================
-# 4.Fixed effects
-# - Supplementary Figure 5
+# 4. Fixed effects (OR scale)
 # ========================================================================== 
+
+# Specify list with fixed effects of all the models -> store in dataframe
+all_fixed_eff = list(model_1 = res_main$summary.fixed,
+                     model_2 = res_main2$summary.fixed) 
+caterpillar_list = lapply(names(all_fixed_eff), function(x) {
+  ff = as.data.frame(all_fixed_eff[[x]])
+  ff$model = x
+  ff$variable =  rownames(ff)
+  ff
+})
+caterpillar_frame <- do.call("rbind", caterpillar_list)
+caterpillar_frame$variable <- as.factor(caterpillar_frame$variable)
+caterpillar_frame$model <- as.factor(caterpillar_frame$model) 
+
+# Clean up names
+caterpillar_frame$variable <- mapvalues(caterpillar_frame$variable , 
+                                        from = c("IMD_stand", "rural_urbanPredominantly Urban", "rural_urbanUrban with Significant Rural", "vax_prop_stand", "BAME_stand", "bame_black_stand", "bame_southasian_stand", "bame_other_stand"), 
+                                        to = c("IMD", "Predominantly Urban", "Urban with Significant Rural", "Vax Rate", "All BAME", "Black", "South-Asian", "Other BAME"))
+# Remove intercept
+caterpillar_frame <- caterpillar_frame %>% filter(variable != "(Intercept)")
+
+# Plot
+ff_plot <- ggplot( ) + geom_errorbar(data = caterpillar_frame, aes (color = model,
+                                                         y = variable,
+                                                         x = exp(`0.5quant`),
+                                                         xmin = exp(`0.025quant`),
+                                                         xmax = exp(`0.975quant`)),
+                          position = position_dodge(width = 0.5), size = 2,  
+                          width=0, alpha = 0.76) + 
+  theme_minimal() + labs(x="Median and 95% CI (OR scale)", y="", color = "Outcome") +
+  geom_point(data = caterpillar_frame, aes (color = model,
+                                            y = variable,
+                                            x = exp(`0.5quant`)), 
+             position = position_dodge(width = 0.5), size = 1 , show.legend = FALSE) +
+  geom_vline(xintercept = 1, linetype="dotted", 
+             color = "red", size=.75) + ggtitle("Fixed Effects")
+
+ff_plot
+#ggsave("fixed_effects_caterpillar.png", ff_plot, width = 10, height = 6)
+
