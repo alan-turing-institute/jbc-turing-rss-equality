@@ -48,7 +48,10 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
   
   # 1. Get spatial distributions by week
   
-  ## Temporal random effect/residual
+  ## Overall spatial latent field (this is the same for each week)
+  space_lf <- inla_res$summary.random$LTLA_ID$`0.5quant`[1:n_LTLA]
+  
+  ## The overall temporal random effect/residual (by week)
   time_res <- inla_res$summary.random$date_ID
   
   for(n in 1:n_weeks){
@@ -56,7 +59,7 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
     month_idx <- data %>% filter(date_ID ==n ) %>% summarise(as.integer(date_month)) %>% unique()
     month_idx <- month_idx$`as.integer(date_month)`
 
-    ## Get data for this week
+    ## Get data (covariate values) for this week
     plot_data <- data %>% filter(date_ID == n & age_class == "[35,55)") %>% 
       pivot_wider(names_from = rural_urban, values_from = rural_urban) %>%
       mutate(`rural_urbanPredominantly Urban` = !is.na(`Predominantly Urban`), 
@@ -68,8 +71,9 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
     plot_data[1,'lad20cd'] <- "E06000060"
     plot_data[1, 'LTLA_ID'] <- 55
 
-    ## Function to extract covariate effects
+    ## Function to extract overall covariate effects
     prob_function <- function(x, inla_res_p) {
+      
       ## fixed effects - multiply coefficients with covariate values
       log_scale_FE <-  inla_res_p$summary.fixed[c("(Intercept)",
                                                   "bame_black_stand",
@@ -86,7 +90,8 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
                                       "rural_urbanPredominantly Urban", 
                                       "rural_urbanUrban with Significant Rural", 
                                       "vax_prop_stand")]))[1,]) 
-      ## random effects 
+      
+      ## random effects - multiply coefficients with covariate values
       log_scale_RE <-  c(inla_res_p$summary.random$date_month_Black[month_idx,"0.5quant"], 
                          inla_res_p$summary.random$date_month_SA[month_idx,"0.5quant"], 
                          inla_res_p$summary.random$date_month_Other[month_idx,"0.5quant"],
@@ -100,12 +105,10 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
     }
     explained <- sapply(1:nrow(plot_data), prob_function, inla_res_p = inla_res )
     
+    ## Get the space-time residual for this week
     start <- 1+(n-1)*n_LTLA
     end <- n*n_LTLA
-    ## Space-time residuals (one per week)
     res <- inla_res$summary.random$date_LTLA_ID$`0.5quant`[start:end]
-    ## Overall spatial latent field (same for each week)
-    space_lf <- inla_res$summary.random$LTLA_ID$`0.5quant`[1:n_LTLA]
     
     ## Sum it all together
     #res[res > 2] <- NA
@@ -122,7 +125,7 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
     print(n)
   }
   
-  # Average spatial distributions over time
+  # Average the spatial distributions over time
   LTLA_shp_Reg$total_pr <- apply(as.matrix(tot_df %>% dplyr::select( week01:week45 )), 1, mean, na.rm = T)
   LTLA_shp_Reg$exp_fraction <- apply(as.matrix(exp_df %>% dplyr::select( week01:week45 )), 1, mean, na.rm = T)
   LTLA_shp_Reg$unexp_fraction <- apply(as.matrix(une_df %>% dplyr::select( week01:week45 )), 1, mean, na.rm = T)
@@ -147,10 +150,10 @@ space_dis_plots <- function(inla_res, data, outcome_name, lims) {
   return(combined)
 }
 
-space_plot <- space_dis_plots(inla_res = res_main,  data = fin_data, outcome_name = "Test Positivity", lims = c(-1.5, 1.5))
+space_plot <- space_dis_plots(inla_res = res_main,  data = fin_data, outcome_name = "Test Positivity", lims = c(-.75, 1.25))
 
 # NOTE: spatial plots take a while to generate
-space_plot
+#space_plot
 #ggsave(filename = 'Figure1.png', space_plot, width = 10, height = 4)
 
 # ==========================================================================
@@ -161,18 +164,19 @@ space_plot
 # The INLA analysis result object
 inla_res <- res_main2
 
-# Get values for low, medium and high BAME and IMD profiles
+# Get values for low/medium/high BAME and IMD profiles
 cov_df <- fin_data %>% filter(date_ID == 1 & age_class == '[35,55)')
 cov_df_small <- cov_df %>% summarise(bame_stand = quantile(BAME_stand, probs = c(0.25, .5, .75)),
                                      IMD_stand = quantile(IMD_stand, probs = c(0.25, .5,  .75)))
 
-# function to transform coefficients into proportions
+# Function to transform coefficients into proportions
 prob_function <- function(x, y) {
-  log_scale <-  inla_res$summary.fixed[c("(Intercept)","IMD_stand","BAME_stand"), "0.5quant"] %*% c(1, cov_df_small$IMD_stand[x], cov_df_small$bame_stand[y])
+  log_scale <-  inla_res$summary.fixed[c("(Intercept)","IMD_stand","BAME_stand"), "0.5quant"] %*% 
+                c(1, cov_df_small$IMD_stand[x], cov_df_small$bame_stand[y])
   return(boot::inv.logit(log_scale))
 }
 
-# get test positivity by BAME & IMD profile (1=low/2=medium/3=high)
+# Get outcome by BAME & IMD profile (1=low/2=medium/3=high)
 val_df <- with(cov_df_small, data.frame(bame_stand = bame_stand[1], bame_idx = 1,
                                         IMD_stand = IMD_stand[1], IMD_idx = 1,
                                         prob = prob_function(1, 1)))
@@ -186,7 +190,7 @@ val_df <- val_df %>% distinct()
 val_df$bame_idx <- factor(val_df$bame_idx, levels = c(1, 2,3), labels = c("Low", "Medium", "High"))
 val_df$IMD_idx <- factor(val_df$IMD_idx, levels = c(1, 2,3), labels = c("Low", "Medium", "High"))
 
-# format text for tiles:
+# Format text for tiles:
 # - the outcome as percentage
 # - in parenthesis the relative change between profile and the reference (low BAME & low IMD)
 val_df$perc <- paste0(format(round(val_df$prob, 4) *100, nsmall = 2), 
@@ -194,7 +198,7 @@ val_df$perc <- paste0(format(round(val_df$prob, 4) *100, nsmall = 2),
                       format(round(val_df$prob/prob_function(1, 1), 2), nsmall = 2), 
                       ")")
 
-# plot
+# Plot
 tile_tp <- ggplot(val_df, aes(x = bame_idx, y = IMD_idx, fill = prob)) +
   geom_tile(aes(fill = prob)) +
   geom_text(aes(label = perc)) +
@@ -225,7 +229,7 @@ aa_BAME <- inla.posterior.sample.eval(function(xx) date_month + BAME_stand, aa)
 aa_IMD <- inla.posterior.sample.eval(function(xx) date_month_IMD + IMD_stand, aa)
 
 ## 3. save
-save(aa_BAME, aa_IMD, file = "AA_uncertainty.RData")
+#save(aa_BAME, aa_IMD, file = "AA_uncertainty.RData")
 
 # Get the the temporal random effect by month 
 time_res <- inla_res$summary.random$date_ID
@@ -263,7 +267,7 @@ time_inter_df$months_idx <- time_res$months_idx
 time_res3 <- time_inter_df %>% group_by(months_idx) %>% summarise(mean= mean(val, na.rm = T))
 
 # Sum fixed and time-varying
-## For jth posterior sample and xx-th BAME profile level and yy-th IMD profile level (1/2/3 for low/medium/high)
+## - For jth posterior sample and xx-th BAME profile level and yy-th IMD profile level (1/2/3 for low/medium/high)
 comp_linpred <- function(j, xx, yy){
   
   tv_coeff <- inla_res$summary.random$date_month[, c("0.5quant", "0.025quant", "0.975quant")]
@@ -295,20 +299,17 @@ tv_coeff3.1 <-  lapply(1:100, comp_linpred, xx = 3, yy = 1)
 # high BAME, high IMD
 tv_coeff3.3 <-  lapply(1:100, comp_linpred, xx = 3, yy = 3)
 
+# Get the relative change between each profile and reference (low BAME, low IMD)
 tv_coeff1.1 <- do.call("rbind", tv_coeff1.1)
-# Get the relative change between profile and reference (low BAME, low IMD)
 tv_coeff1.1$RR <- tv_coeff1.1$`0.5quant`/tv_coeff1.1$`0.5quant`
 
 tv_coeff1.3 <- do.call("rbind", tv_coeff1.3)
-# Get the relative change between profile and reference (low BAME, low IMD)
 tv_coeff1.3$RR <- tv_coeff1.3$`0.5quant`/tv_coeff1.1$`0.5quant`
 
 tv_coeff3.1 <- do.call("rbind", tv_coeff3.1)
-# Get the relative change between profile and reference (low BAME, low IMD)
 tv_coeff3.1$RR <- tv_coeff3.1$`0.5quant`/tv_coeff1.1$`0.5quant`
 
 tv_coeff3.3 <- do.call("rbind", tv_coeff3.3)
-# Get the relative change between profile and reference (low BAME, low IMD)
 tv_coeff3.3$RR <- tv_coeff3.3$`0.5quant`/tv_coeff1.1$`0.5quant`
 
 pal <- c("red", brewer.seqseq1()[c(3, 7, 9)])
@@ -320,9 +321,9 @@ df_fin <- df_fin %>% group_by(var, level_bame, level_imd) %>% summarise(q2 = med
                                                                         q3 = quantile(RR, probs = 0.975) )
 df_fin$level <- interaction(as.factor(df_fin$level_bame), as.factor(df_fin$level_imd))
 
+# Plot
 levels(df_fin$level) <- c("Low BAME - Low IMD", "High BAME - Low IMD",
                           "Low BAME - High IMD", "High BAME - High IMD")
-#table(df_fin$level)
 
 test_posRR <- ggplot(df_fin, aes(x = var, y = q2,  color = level, fill = level)) + geom_point( )+ geom_line(size = .61, alpha = 0.71) +
   geom_ribbon(aes(ymin=q1, ymax = q3, fill = level),
@@ -331,6 +332,8 @@ test_posRR <- ggplot(df_fin, aes(x = var, y = q2,  color = level, fill = level))
   theme(legend.position = "bottom") 
 
 test_posRR
+#ggsave(filename = 'Figure3.png', test_posRR, width = 10, height = 8)
+
 
 # ==========================================================================
 # 4. Temporal trend (logit scale)
@@ -339,11 +342,11 @@ test_posRR
 
 make_time_plot <- function(inla_res, outcome_name, color_band) { 
   
-  # temporal random effects
+  # Temporal random effects
   time_res <- inla_res$summary.random$date_ID
   time_res$week <- seq(1, n_weeks)
   
-  # space-time interactions
+  # Get space-time interactions by week
   inter_df <- data.frame(LTLA_ID = 1:n_LTLA)
   for(n in 1:n_weeks){
     start <- 1+(n-1)*n_LTLA
@@ -356,16 +359,16 @@ make_time_plot <- function(inla_res, outcome_name, color_band) {
       inter_df[,paste0('week', n)] <- res
     }
   }
-  # average over LTLAs to get mean by week
+  ## Average over LTLAs to get mean by week
   time_inter_df <- inter_df %>% gather('week', 'val', week01:week45)
   time_res_week <- time_inter_df %>% group_by(week) %>% summarise(mean= mean(val, na.rm = T))
   
-  # sum the two temporal components
+  # Sum the two temporal components
   time_res$lin_pred <- (time_res$mean + time_res_week$mean)
   time_res$lin_pred_0.025quant <- (time_res$`0.025quant` + time_res_week$mean)
   time_res$lin_pred_0.975quant <- (time_res$`0.975quant` + time_res_week$mean)
   
-  # plot
+  # Plot
   time_plot <- ggplot(time_res, aes(x = week, y = lin_pred)) + geom_point(size = 0.75) + geom_line() +
     geom_ribbon(aes(ymin=lin_pred_0.025quant, ymax = lin_pred_0.975quant),
                 linetype = 2, alpha=0.5, fill = color_band, colour = NA) + 
@@ -383,6 +386,7 @@ time_plot
 
 # ==========================================================================
 # 4. Fixed effects (OR scale)
+# - Supplementary figures
 # ========================================================================== 
 
 # Specify list with fixed effects of all the models -> store in dataframe
@@ -402,6 +406,8 @@ caterpillar_frame$model <- as.factor(caterpillar_frame$model)
 caterpillar_frame$variable <- mapvalues(caterpillar_frame$variable , 
                                         from = c("IMD_stand", "rural_urbanPredominantly Urban", "rural_urbanUrban with Significant Rural", "vax_prop_stand", "BAME_stand", "bame_black_stand", "bame_southasian_stand", "bame_other_stand"), 
                                         to = c("IMD", "Predominantly Urban", "Urban with Significant Rural", "Vax Rate", "All BAME", "Black", "South-Asian", "Other BAME"))
+caterpillar_frame$model <- revalue(caterpillar_frame$model, c("model_1" = "Analysis 1", "model_2" = "Analysis 2"))
+
 # Remove intercept
 caterpillar_frame <- caterpillar_frame %>% filter(variable != "(Intercept)")
 
@@ -422,5 +428,5 @@ ff_plot <- ggplot( ) + geom_errorbar(data = caterpillar_frame, aes (color = mode
              color = "red", size=.75) + ggtitle("Fixed Effects")
 
 ff_plot
-#ggsave("fixed_effects_caterpillar.png", ff_plot, width = 10, height = 6)
+#ggsave("fixed_effects_caterpillar.png", ff_plot, width = 10, height = 4)
 

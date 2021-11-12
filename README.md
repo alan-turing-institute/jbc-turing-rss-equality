@@ -56,25 +56,29 @@ As stated above, these plots do not reproduce results in the paper.
 
 ## Data
 
-This repository comes with a toy dataset (`toy_data.RDS`) with the following columns:
+This repository comes with a toy dataset (`toy_data.RDS`).
+The data is aggregated by LTLA, week and age class.
+
+The dataset has the following columns:
 - `lad20cd`: LTLA code (using 2020 codes)
 - `LTLA_ID`: an integer ID for each LTLA (1-311)
 - `week` & `date_ID`: an integer ID for each week (0-44 and 1-45 respectively)
 - `date_LTLA_ID`: an integer ID for each combination of LTLA and date
-- `date_month`: an integer ID for the month of year of each week (1-11)
+- `date_month`: an integer ID for the month of each week (1-11; note that these do not correspond to calendar months)
 - `age_class`: the age bracket/group
 - `counts`: number of positive tests in that LTLA, age group and week
-- `tot_pop`: total population of the given LTLA in the given age group
-- `vax_prop`: proportion of the population that is considered fully vaccinated in that LTLA, age group and week
+- `tot_pop`: total population of the given age group in the LTLA 
+- `vax_prop`: proportion of the population that is considered fully vaccinated in the LTLA, age group and week
 - `IMD`: Index of Multiple Deprivation score (by LTLA)
 - `Black_prop`: proportion of LTLA population that identifies as Black (according to the 2011 census)
 - `South_Asian_prop`: proportion of LTLA population that identifies as South Asian (according to the 2011 census)
 - `Other_BAME_prop`: proportion of LTLA population that identifies as non-White (but not Black or South Asian, according to the 2011 census)
+- `BAME`: proportion of LTLA population that identifies as Black, South Asian or Other BAME (according to 2011 census)
 - `rural_urban`: the rural/urban classification of the LTLA
 
 All columns that end in `_stand` are standardized versions of that column (i.e., mean=0 and sd=1).
 
-There are also multiple `data_month_X` columns. These are all identical but R-INLA requires that we have a new column in the formula each time we want to use this variable.
+There are also multiple `date_month_X` columns. These are all identical but R-INLA requires that we have a new column in the formula each time we want to re-use this variable.
 
 To create the toy dataset we used the following sources:
 - [Coronavirus data](https://coronavirus.data.gov.uk/details/download)
@@ -82,4 +86,4 @@ To create the toy dataset we used the following sources:
 - [Index of Multiple Deprivation](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019)
 - [Census data](https://www.nomisweb.co.uk/query/select/getdatasetbytheme.asp?opt=3&theme=&subgrp=)
 
-We also include in this repository a `space_obj.RData` file which we use for spatial plotting (it allows us to link LTLA_IDs with geographical data).
+We also include in this repository a `space_obj.RData` file which we use for the spatial plotting (it allows us to link LTLA_IDs with geographical data).
