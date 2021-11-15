@@ -1,4 +1,5 @@
 library(INLA)
+library(dplyr)
 
 # Load data
 fin_data <- readRDS(file="toy_data.RDS")
