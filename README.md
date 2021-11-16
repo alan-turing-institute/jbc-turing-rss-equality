@@ -1,17 +1,18 @@
 # Time-varying association between deprivation, ethnicity and SARS-CoV-2 infections
 
-This repository contains code to run analysis described in [Time varying association between deprivation, ethnicity and SARS-CoV-2 infections in England: an ecological space-time study](https://www.medrxiv.org/content/10.1101/2021.11.09.21266054v1).
+This repository contains code to run analyses described in [Time varying association between deprivation, ethnicity and SARS-CoV-2 infections in England: an ecological space-time study](https://www.medrxiv.org/content/10.1101/2021.11.09.21266054v1).
 
 ## Overview
 
 **Due to data confidenciality issues, the testing and vaccination data used in the paper cannot be shared.**
 
-Publicly available testing and vaccination **data provided in this repository are for illustration purpose only** and have been retrieved from https://coronavirus.data.gov.uk/details/download. 
+Publicly available testing and vaccination **data provided in this repository are for illustration purpose only** and have been retrieved from https://coronavirus.data.gov.uk/details/download.
 
-Note that whereas in the article we model the test positivity rate (number of positive tests out of total number of tests), here we have to use the number of positive tests out of the total population. 
+Note that whereas in the article we model the test positivity rate (number of positive tests out of total number of tests), here we have to use the number of positive tests out of the total population.
 
 The data in this repository therefore cannot be used to reproduce the original study results.
 Nevertheless, the model structure and parameters used in the actual analysis are the same as described here.
+We also include plotting code that shows how to format the analysis output to retrieve the results.
 
 ## Getting started
 
@@ -21,23 +22,26 @@ Clone this repo:
 git clone https://github.com/alan-turing-institute/jbc-turing-rss-equality.git
 ```
 
-The analysis code with the two main formulas used in the paper is in the [equality_model.R](equality_model.R) script. 
-
 To run the analysis requires installing the [R-INLA](https://www.r-inla.org) package:
 
 ```{R}
 install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 ```
 
+### Analysis
+
+The analysis code with the two main formulas used in the paper is in the [equality_model.R](equality_model.R) script.
+
 The analysis script has two file dependencies:
 - `toy_data.RDS` which contains a toy dataset retrieved from public data source
 - `W.adj` which has the LTLA adjacency matrix necessary for including the spatial randon effect in the model
 
-## Plotting
+### Plotting
 
-We also include a [plot.R](plot.R) script with code for producing an equivalent of the key figures in the paper using outputs of the two analyses contained here.
-To produce the plots, further packages are required.
-To install those, run:
+The [plot.R](plot.R) script contains code for producing an equivalent of the key figures in the paper using outputs of the two analyses here.
+Once you have run the two analyses, you can run the plotting script on the outputs.
+
+To install the required packages for plotting:
 
 ```{R}
 packages <- c(
@@ -45,14 +49,12 @@ packages <- c(
   "plyr",
   "dplyr",
   "ggplot2",
-  "patchwork","
+  "patchwork",
   "pals",
-  "sf""
+  "sf"
 )
 install.packages(packages)
 ```
-
-As stated above, these plots do not reproduce results in the paper.
 
 ## Data
 
@@ -67,7 +69,7 @@ The dataset has the following columns:
 - `date_month`: an integer ID for the month of each week (1-11; note that these do not correspond to calendar months)
 - `age_class`: the age bracket/group
 - `counts`: number of positive tests in that LTLA, age group and week
-- `tot_pop`: total population of the given age group in the LTLA 
+- `tot_pop`: total population of the given age group in the LTLA
 - `vax_prop`: proportion of the population that is considered fully vaccinated in the LTLA, age group and week
 - `IMD`: Index of Multiple Deprivation score (by LTLA)
 - `Black_prop`: proportion of LTLA population that identifies as Black (according to the 2011 census)
@@ -78,7 +80,7 @@ The dataset has the following columns:
 
 All columns that end in `_stand` are standardized versions of that column (i.e., mean=0 and sd=1).
 
-There are also multiple `date_month_X` columns. These are all identical but R-INLA requires that we have a new column in the formula each time we want to re-use this variable.
+There are also multiple `date_month_X` columns. These are all identical but R-INLA requires that we have a new column in the formula each time we want to re-use the variable.
 
 To create the toy dataset we used the following sources:
 - [Coronavirus data](https://coronavirus.data.gov.uk/details/download)
