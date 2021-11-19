@@ -12,7 +12,7 @@ Note that whereas in the article we model the test positivity rate (number of po
 
 The data in this repository therefore cannot be used to reproduce the original study results.
 Nevertheless, the model structure and parameters used in the actual analysis are the same as described here.
-We also include plotting code that shows how to format the analysis output to retrieve the results.
+We also include plotting code that shows how to format the analysis outputs.
 
 ## Getting started
 
@@ -22,26 +22,13 @@ Clone this repo:
 git clone https://github.com/alan-turing-institute/jbc-turing-rss-equality.git
 ```
 
-To run the analysis requires installing the [R-INLA](https://www.r-inla.org) package:
+The analysis is in R and requires installing the [R-INLA](https://www.r-inla.org) package:
 
 ```{R}
 install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 ```
 
-### Analysis
-
-The analysis code with the two main formulas used in the paper is in the [equality_model.R](equality_model.R) script.
-
-The analysis script has two file dependencies:
-- `toy_data.RDS` which contains a toy dataset retrieved from public data source
-- `W.adj` which has the LTLA adjacency matrix necessary for including the spatial randon effect in the model
-
-### Plotting
-
-The [plot.R](plot.R) script contains code for producing an equivalent of the key figures in the paper using outputs of the two analyses here.
-Once you have run the two analyses, you can run the plotting script on the outputs.
-
-To install the required packages for plotting:
+To install other required packages (mainly for plotting):
 
 ```{R}
 packages <- c(
@@ -55,6 +42,15 @@ packages <- c(
 )
 install.packages(packages)
 ```
+
+## Analysis
+
+The analysis code with the two main formulas used in the paper is in the [equality_model.R](equality_model.R) script.
+The analysis script loads two files from this repo:
+- `toy_data.RDS` which contains a toy dataset retrieved from public data source
+- `W.adj` which has the LTLA adjacency matrix necessary for including the spatial randon effect in the model
+
+The [plot.R](plot.R) script contains code for producing an equivalent of the key figures in the paper using outputs of the two analyses here.
 
 ## Data
 
@@ -88,4 +84,4 @@ To create the toy dataset we used the following sources:
 - [Index of Multiple Deprivation](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019)
 - [Census data](https://www.nomisweb.co.uk/query/select/getdatasetbytheme.asp?opt=3&theme=&subgrp=)
 
-We also include in this repository a `space_obj.RData` file which we use for the spatial plotting (it allows us to link LTLA_IDs with geographical data).
+We also include in this repository a `space_obj.RData` file which we use for the spatial plots (it links LTLA_IDs with geographical data).
