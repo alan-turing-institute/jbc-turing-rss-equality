@@ -1,6 +1,6 @@
 # Time-varying association between deprivation, ethnicity and SARS-CoV-2 infections
 
-This repository contains code to run analyses described in [Time varying association between deprivation, ethnicity and SARS-CoV-2 infections in England: an ecological space-time study](https://www.medrxiv.org/content/10.1101/2021.11.09.21266054v1).
+This repository contains code to run analyses described in [Time varying association between deprivation, ethnicity and SARS-CoV-2 infections in England: A population-based ecological study](https://www.sciencedirect.com/science/article/pii/S2666776222000151).
 
 ## Overview
 
