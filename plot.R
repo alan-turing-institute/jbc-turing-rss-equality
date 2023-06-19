@@ -170,9 +170,10 @@ cov_df_small <- cov_df %>% summarise(bame_stand = quantile(BAME_stand, probs = c
                                      IMD_stand = quantile(IMD_stand, probs = c(0.25, .5,  .75)))
 
 # Function to transform coefficients into proportions
+# x-th BAME profile level and y-th IMD profile level (1/2/3 for low/medium/high)
 prob_function <- function(x, y) {
   log_scale <-  inla_res$summary.fixed[c("(Intercept)","IMD_stand","BAME_stand"), "0.5quant"] %*% 
-                c(1, cov_df_small$IMD_stand[x], cov_df_small$bame_stand[y])
+                c(1, cov_df_small$IMD_stand[y], cov_df_small$bame_stand[x])
   return(boot::inv.logit(log_scale))
 }
 
